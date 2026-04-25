@@ -1,4 +1,23 @@
-# Logs
+# ======================================================================
+# Fichiers et dossiers à ignorer par Git (Ne pas partager sur le dépôt)
+# ======================================================================
+
+# 1. Dépendances et librairies installées (TRÈS IMPORTANT)
+node_modules
+node_modules/
+
+# 2. Fichiers de construction (le résultat final compilé)
+dist
+dist/
+dist-ssr
+
+# 3. Variables d'environnement (Mots de passe, connexions BDD locales)
+.env
+.env.local
+.env.*.local
+*.local
+
+# 4. Logs et traces d'erreurs générés automatiquement
 logs
 *.log
 npm-debug.log*
@@ -7,12 +26,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
+# 5. Fichiers systèmes ou générés par les éditeurs de code (VSCode, Mac, etc.)
 .vscode/*
 !.vscode/extensions.json
 .idea
