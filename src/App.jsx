@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { PreferencesProvider } from './context/PreferencesContext';
 import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
 import Alerts from './pages/Alerts';
@@ -12,8 +13,9 @@ import FamilyDetails from './pages/FamilyDetails';
 
 function App() {
   return (
-    <div className="dark bg-slate-900 text-slate-100 min-h-screen">
-      <BrowserRouter>
+    <PreferencesProvider>
+      <div className="dark bg-slate-900 text-slate-100 min-h-screen">
+        <BrowserRouter>
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
@@ -29,6 +31,7 @@ function App() {
         </Routes>
       </BrowserRouter>
     </div>
+    </PreferencesProvider>
   );
 }
 

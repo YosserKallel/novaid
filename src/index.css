@@ -8,3 +8,11 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+body.app-font-medium * {
+  font-weight: 500 !important;
+}
+
+body.app-font-bold * {
+  font-weight: 700 !important;
+}

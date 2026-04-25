@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import AddFamilyModal from '../components/AddFamilyModal';
 import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 // --- ICONS EXACTEMENT IDENTIQUES ---
@@ -125,20 +126,49 @@ function StatusBadge({ status }) {
 }
 
 // --- DONNÉES FACTICES ---
-const mockFamilies = [
+const initialFamilies = [
   { _id: '1', name: 'Famille Dupont', address: '12 Rue de Paris', status: 'STABLE', needs: ['Nourriture'] },
   { _id: '2', name: 'Famille Martin', address: '8 Avenue des Champs', status: 'URGENT', needs: ['Médicaments', 'Vêtements'] },
   { _id: '3', name: 'Famille Bernard', address: '45 Boulevard Mignon', status: 'STABLE', needs: [] },
 ];
 
 function Dashboard() {
+  const [families, setFamilies] = useState(initialFamilies);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [familyToEdit, setFamilyToEdit] = useState(null);
   
-  const totalFamilies = 3; 
-  const urgentFamilies = 1;
+  const totalFamilies = families.length; 
+  const urgentFamilies = families.filter(f => f.status === 'URGENT').length;
   const visitsCount = 5;
 
-  const filteredFamilies = mockFamilies.filter((f) => {
+  const handleOpenAdd = () => {
+    setFamilyToEdit(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (family) => {
+    setFamilyToEdit(family);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteFamily = (familyId) => {
+    if (window.confirm("Êtes-vous sûr de vouloir supprimer cette famille ?")) {
+      setFamilies(prev => prev.filter(f => f._id !== familyId));
+    }
+  };
+
+  const handleSaveFamily = (familyData) => {
+    setFamilies(prev => {
+      const exists = prev.find(f => f._id === familyData._id);
+      if (exists) {
+        return prev.map(f => f._id === familyData._id ? familyData : f);
+      }
+      return [...prev, familyData];
+    });
+  };
+
+  const filteredFamilies = families.filter((f) => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return true;
     const name = (f.name || '').toLowerCase();
@@ -155,12 +185,20 @@ function Dashboard() {
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
+              onClick={handleOpenAdd}
               className="inline-flex items-center justify-center min-h-[44px] px-4 py-3 text-sm font-medium text-white bg-blue-600 dark:bg-blue-500 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 shrink-0"
             >
               Ajouter une famille
             </button>
           </div>
         </div>
+
+        <AddFamilyModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSave={handleSaveFamily}
+          initialData={familyToEdit}
+        />
 
         {/* 3 STATS CARDS */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
@@ -242,10 +280,16 @@ function Dashboard() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg">
+                        <button 
+                          onClick={() => handleOpenEdit(family)}
+                          className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg"
+                        >
                           <IconPencil />
                         </button>
-                        <button className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg">
+                        <button 
+                          onClick={() => handleDeleteFamily(family._id)}
+                          className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg"
+                        >
                           <IconTrash />
                         </button>
                       </div>

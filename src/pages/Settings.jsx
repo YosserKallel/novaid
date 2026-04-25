@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import AppNavbar from '../components/AppNavbar';
+import { usePreferences } from '../context/PreferencesContext';
 
 const FONT_OPTIONS = [
   { value: 'base', label: 'Taille Standard', iconClass: 'text-sm font-semibold' },
@@ -14,8 +15,7 @@ const FONT_WEIGHT_OPTIONS = [
 ];
 
 export default function Settings() {
-  const [fontSize, setFontSize] = useState('base');
-  const [fontWeight, setFontWeight] = useState('normal');
+  const { fontSize, setFontSize, fontWeight, setFontWeight } = usePreferences();
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100">
@@ -59,7 +59,11 @@ export default function Settings() {
               );
             })}
           </div>
-          <p className="mt-5 text-sm text-slate-500 dark:text-slate-400 italic bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg border border-slate-100 dark:border-slate-700/50">
+          <p className={`mt-5 text-slate-800 dark:text-slate-200 italic bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg border border-slate-100 dark:border-slate-700/50 transition-all ${
+            fontSize === 'base' ? 'text-base' : fontSize === 'lg' ? 'text-lg' : 'text-xl'
+          } ${
+            fontWeight === 'normal' ? 'font-normal' : fontWeight === 'medium' ? 'font-medium' : 'font-bold'
+          }`}>
             Aperçu : Voici comment le texte "standard" s'affichera dans l'application... (Aperçu activé localement)
           </p>
         </section>
@@ -92,7 +96,11 @@ export default function Settings() {
               );
             })}
           </div>
-          <p className="mt-5 text-sm text-slate-500 dark:text-slate-400 italic bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg border border-slate-100 dark:border-slate-700/50">
+          <p className={`mt-5 text-slate-800 dark:text-slate-200 italic bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg border border-slate-100 dark:border-slate-700/50 transition-all ${
+            fontSize === 'base' ? 'text-base' : fontSize === 'lg' ? 'text-lg' : 'text-xl'
+          } ${
+            fontWeight === 'normal' ? 'font-normal' : fontWeight === 'medium' ? 'font-medium' : 'font-bold'
+          }`}>
             Aperçu : Observez la différence de contraste des caractères pour choisir la meilleure option de lecture.
           </p>
         </section>
@@ -105,7 +113,7 @@ export default function Settings() {
             Réinitialiser
           </button>
           <button 
-            onClick={() => alert('Préférences sauvegardées ! (Mock)')}
+            onClick={() => alert('Préférences sauvegardées et appliquées à tout le site !')}
             className="px-6 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors shadow-sm"
           >
             Enregistrer les préférences
