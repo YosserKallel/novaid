@@ -1,43 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import AddFamilyModal from '../components/AddFamilyModal';
+import { Users, AlertTriangle, CheckCircle, Search, Edit2, Trash2 } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-
-// --- ICONS EXACTEMENT IDENTIQUES ---
-const IconUsers = () => (
-  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-  </svg>
-);
-const IconAlert = () => (
-  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-  </svg>
-);
-const IconVisits = () => (
-  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-  </svg>
-);
-const IconSearch = () => (
-  <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-  </svg>
-);
-const IconPencil = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-  </svg>
-);
-const IconTrash = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-  </svg>
-);
+import AddFamilyModal from '../components/AddFamilyModal';
 import AppNavbar from '../components/AppNavbar';
 
-// --- MOCK DASHBOARD CHARTS EXACTEMENT IDENTIQUE ---
-const NEEDS_COLORS = ['#3b82f6', '#22c55e', '#f97316', '#ef4444', '#8b5cf6', '#06b6d4'];
+// --- ANIMATED COUNTER COMPONENT ---
+function CountUpValue({ targetValue }) {
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    let animationFrameId;
+    let currentValue = 0;
+    const startTime = Date.now();
+    const duration = 700; // 700ms animation
+
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      currentValue = Math.floor(progress * targetValue);
+      setDisplayValue(currentValue);
+
+      if (progress < 1) {
+        animationFrameId = requestAnimationFrame(animate);
+      }
+    };
+
+    animationFrameId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [targetValue]);
+
+  return <span>{displayValue}</span>;
+}
+
+// --- MOCK DASHBOARD CHARTS WITH NEW DESIGN SYSTEM ---
+const NEEDS_COLORS = ['#4f7fff', '#22c87a', '#f0a742', '#f04e4e', '#9b7ff4', '#2dd4bf'];
+
 function buildNeedsData() {
   return [
     { name: 'Alimentaire', value: 4 },
@@ -46,6 +44,7 @@ function buildNeedsData() {
     { name: 'Social', value: 2 }
   ];
 }
+
 function buildLast7DaysData() {
   return [
     { date: '12/04', visites: 1 },
@@ -63,11 +62,11 @@ function DashboardCharts() {
   const weekData = buildLast7DaysData();
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-      {/* CARD PIE CHART */}
-      <div className="bg-white dark:bg-white rounded-xl shadow-sm border border-slate-200 dark:border-slate-200 p-5">
-        <h3 className="text-base font-semibold text-slate-800 mb-4">Répartition des Besoins</h3>
-        <div className="h-[280px] min-h-[200px] w-full min-w-0">
+    <div className="grid-2 gap-6 mb-6">
+      {/* DONUT CHART */}
+      <div className="card">
+        <h3 className="text-base font-medium text-primary mb-4">Répartition des Besoins</h3>
+        <div className="h-80 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
@@ -76,33 +75,73 @@ function DashboardCharts() {
                 nameKey="name"
                 cx="50%"
                 cy="50%"
-                outerRadius={90}
+                innerRadius={60}
+                outerRadius={100}
                 label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                labelLine={true}
               >
                 {needsData.map((_, index) => (
                   <Cell key={index} fill={NEEDS_COLORS[index % NEEDS_COLORS.length]} />
                 ))}
               </Pie>
-              <RechartsTooltip formatter={(value) => [`${value} famille(s)`, 'Nombre']} />
+              <RechartsTooltip 
+                formatter={(value) => [`${value} famille(s)`, 'Nombre']}
+                contentStyle={{ 
+                  backgroundColor: 'var(--bg-card)', 
+                  border: '1px solid rgba(79,127,255,0.3)',
+                  borderRadius: '8px',
+                  color: 'var(--text-primary)'
+                }}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
+        <div className="chart-legend mt-4">
+          {needsData.map((item, idx) => (
+            <div key={idx} className="flex items-center gap-2 text-sm">
+              <div 
+                className="w-3 h-3 rounded-full" 
+                style={{ backgroundColor: NEEDS_COLORS[idx % NEEDS_COLORS.length] }}
+              />
+              <span className="text-secondary">{item.name}: {item.value}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* CARD BAR CHART */}
-      <div className="bg-white dark:bg-white rounded-xl shadow-sm border border-slate-200 dark:border-slate-200 p-5">
-        <h3 className="text-base font-semibold text-slate-800 mb-4">Visites cette semaine</h3>
-        <div className="h-[280px] min-h-[200px] w-full min-w-0">
+      {/* BAR CHART */}
+      <div className="card">
+        <h3 className="text-base font-medium text-primary mb-4">Visites cette semaine</h3>
+        <div className="h-80 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={weekData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="date" tick={{ fill: "#64748b", fontSize: 12 }} stroke="#64748b" />
-              <YAxis allowDecimals={false} tick={{ fill: "#64748b", fontSize: 12 }} stroke="#64748b" />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(139,146,165,0.2)" />
+              <XAxis 
+                dataKey="date" 
+                tick={{ fill: "var(--text-muted)", fontSize: 12 }} 
+                stroke="rgba(139,146,165,0.2)"
+              />
+              <YAxis 
+                allowDecimals={false} 
+                tick={{ fill: "var(--text-muted)", fontSize: 12 }} 
+                stroke="rgba(139,146,165,0.2)"
+              />
               <RechartsTooltip
                 formatter={(value) => [value, 'Visites']}
                 labelFormatter={(label) => `Jour : ${label}`}
+                contentStyle={{ 
+                  backgroundColor: 'var(--bg-card)', 
+                  border: '1px solid rgba(79,127,255,0.3)',
+                  borderRadius: '8px',
+                  color: 'var(--text-primary)'
+                }}
               />
-              <Bar dataKey="visites" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Visites" />
+              <Bar 
+                dataKey="visites" 
+                fill="#4f7fff" 
+                radius={[4, 4, 0, 0]} 
+                name="Visites"
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -111,28 +150,27 @@ function DashboardCharts() {
   );
 }
 
-// --- MOCK BADE STATUS ---
+// --- STATUS BADGE WITH NEW DESIGN ---
 function StatusBadge({ status }) {
   const isUrgent = status === 'URGENT';
+  const accentClass = isUrgent ? 'accent-red' : 'accent-green';
+  
   return (
-    <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-        isUrgent ? 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-200' : 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-200'
-      }`}
-    >
+    <div className={`badge badge-${isUrgent ? 'urgent' : 'stable'}`}>
+      <span className={`badge-dot ${isUrgent ? 'pulse' : ''}`} />
       {status}
-    </span>
+    </div>
   );
 }
 
-// --- DONNÉES FACTICES ---
+// --- MOCK DATA ---
 const initialFamilies = [
-  { _id: '1', name: 'Famille Dupont', address: '12 Rue de Paris', status: 'STABLE', needs: ['Nourriture'] },
-  { _id: '2', name: 'Famille Martin', address: '8 Avenue des Champs', status: 'URGENT', needs: ['Médicaments', 'Vêtements'] },
-  { _id: '3', name: 'Famille Bernard', address: '45 Boulevard Mignon', status: 'STABLE', needs: [] },
+  { _id: '1', name: 'Famille Ben Salah', address: 'Sousse, Khzema', status: 'STABLE', needs: ['Alimentaire', 'Médical'] },
+  { _id: '2', name: 'Famille Ayadi', address: 'Sfax, Menzel Chaker', status: 'URGENT', needs: ['Médical', 'Alimentaire'] },
+  { _id: '3', name: 'Famille Belghith', address: 'Tunis, Mrezga', status: 'URGENT', needs: ['Médical', 'Scolaire'] },
 ];
 
-function Dashboard() {
+function Dashboard({ toggleTheme, isDark }) {
   const [families, setFamilies] = useState(initialFamilies);
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -177,20 +215,22 @@ function Dashboard() {
   });
 
   return (
-    <div className="bg-slate-50 dark:bg-slate-900 min-h-screen text-slate-800 dark:text-slate-100">
-      <AppNavbar />
-      <main className="max-w-6xl mx-auto px-4 py-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Familles bénéficiaires</h2>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={handleOpenAdd}
-              className="inline-flex items-center justify-center min-h-[44px] px-4 py-3 text-sm font-medium text-white bg-blue-600 dark:bg-blue-500 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 shrink-0"
-            >
-              Ajouter une famille
-            </button>
+    <div className="page-container">
+      <AppNavbar activeRoute="dashboard" toggleTheme={toggleTheme} isDark={isDark} />
+      
+      <main className="page-main">
+        {/* PAGE HEADER */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+          <div>
+            <h1 className="page-title">Tableau de Bord</h1>
+            <p className="text-secondary">Aperçu des familles et statistiques</p>
           </div>
+          <button
+            onClick={handleOpenAdd}
+            className="btn btn-primary"
+          >
+            + Ajouter une famille
+          </button>
         </div>
 
         <AddFamilyModal
@@ -200,104 +240,139 @@ function Dashboard() {
           initialData={familyToEdit}
         />
 
-        {/* 3 STATS CARDS */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-600 p-4 flex items-center gap-4">
-            <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-400">
-              <IconUsers />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Total Familles</p>
-              <p className="text-2xl font-semibold text-slate-800 dark:text-slate-100">{totalFamilies}</p>
-            </div>
-          </div>
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-600 p-4 flex items-center gap-4">
-            <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-red-100 dark:bg-red-900/40 flex items-center justify-center text-red-600 dark:text-red-400">
-              <IconAlert />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Familles Urgentes</p>
-              <p className="text-2xl font-semibold text-slate-800 dark:text-slate-100">{urgentFamilies}</p>
+        {/* STAT CARDS - 3 COLUMN GRID */}
+        <div className="grid-3 gap-4 mb-8">
+          {/* Total Families Card */}
+          <div className="card card-accent-top accent-blue">
+            <div className="stat-card">
+              <div className="stat-icon blue">
+                <Users size={28} />
+              </div>
+              <div>
+                <p className="stat-label">Total Familles</p>
+                <p className="stat-value">
+                  <CountUpValue targetValue={totalFamilies} />
+                </p>
+              </div>
             </div>
           </div>
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-600 p-4 flex items-center gap-4">
-            <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400">
-              <IconVisits />
+
+          {/* Urgent Families Card */}
+          <div className="card card-accent-top accent-red">
+            <div className="stat-card">
+              <div className="stat-icon red">
+                <AlertTriangle size={28} />
+              </div>
+              <div>
+                <p className="stat-label">Familles Urgentes</p>
+                <p className="stat-value">
+                  <CountUpValue targetValue={urgentFamilies} />
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Visites Réalisées</p>
-              <p className="text-2xl font-semibold text-slate-800 dark:text-slate-100">{visitsCount}</p>
+          </div>
+
+          {/* Completed Visits Card */}
+          <div className="card card-accent-top accent-green">
+            <div className="stat-card">
+              <div className="stat-icon green">
+                <CheckCircle size={28} />
+              </div>
+              <div>
+                <p className="stat-label">Visites Réalisées</p>
+                <p className="stat-value">
+                  <CountUpValue targetValue={visitsCount} />
+                </p>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* CHARTS */}
+        {/* CHARTS SECTION */}
         <DashboardCharts />
 
-        {/* SEARCH BAR */}
-        <div className="mb-4">
-          <div className="relative max-w-xs">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-              <IconSearch />
-            </span>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Rechercher une famille..."
-              className="w-full min-h-[44px] pl-10 pr-4 py-3 border border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-100 rounded-lg text-sm"
-            />
-          </div>
-        </div>
+        {/* SEARCH AND TABLE SECTION */}
+        <div className="mb-6">
+          <div className="table-wrapper">
+            <div className="table-search">
+              <Search size={20} className="search-icon" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Rechercher une famille..."
+                className="search-input"
+              />
+            </div>
 
-        {/* FAMILIES TABLE */}
-        <div className="hidden md:block bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-600 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-600">
-              <thead>
-                <tr className="bg-slate-50 dark:bg-slate-700/50">
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 dark:text-slate-300 uppercase tracking-wider">Nom</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 dark:text-slate-300 uppercase tracking-wider">Adresse</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 dark:text-slate-300 uppercase tracking-wider">Statut</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 dark:text-slate-300 uppercase tracking-wider">Besoins</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-slate-600 dark:text-slate-300 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-600">
-                {filteredFamilies.map((family) => (
-                  <tr key={family._id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                    <td className="px-4 py-3">
-                      <span className="text-sm font-medium text-blue-600 dark:text-blue-400 min-h-[44px] inline-flex items-center">
-                        {family.name}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{family.address || '-'}</td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={family.status} />
-                    </td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
-                      {family.needs?.length > 0 ? family.needs.join(', ') : '-'}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <button 
-                          onClick={() => handleOpenEdit(family)}
-                          className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg"
-                        >
-                          <IconPencil />
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteFamily(family._id)}
-                          className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg"
-                        >
-                          <IconTrash />
-                        </button>
-                      </div>
-                    </td>
+            {/* RESPONSIVE TABLE */}
+            <div className="overflow-x-auto">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Nom</th>
+                    <th>Adresse</th>
+                    <th>Statut</th>
+                    <th>Besoins</th>
+                    <th className="text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filteredFamilies.length > 0 ? (
+                    filteredFamilies.map((family) => (
+                      <tr key={family._id}>
+                        <td>
+                          <Link to={`/family/${family._id}`} className="link-primary">
+                            {family.name}
+                          </Link>
+                        </td>
+                        <td>{family.address || '-'}</td>
+                        <td>
+                          <StatusBadge status={family.status} />
+                        </td>
+                        <td>
+                          <div className="flex gap-1 flex-wrap">
+                            {family.needs?.length > 0 ? (
+                              family.needs.map((need, idx) => (
+                                <span key={idx} className="need-pill need-pill-default">
+                                  {need}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-muted">-</span>
+                            )}
+                          </div>
+                        </td>
+                        <td>
+                          <div className="flex items-center justify-end gap-2">
+                            <button 
+                              onClick={() => handleOpenEdit(family)}
+                              className="action-button edit"
+                              title="Éditer"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteFamily(family._id)}
+                              className="action-button delete"
+                              title="Supprimer"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="5" className="text-center py-8 text-muted">
+                        Aucune famille trouvée
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </main>

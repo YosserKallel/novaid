@@ -9,6 +9,31 @@ const TYPE_STYLES = {
   Autre: { bg: 'bg-slate-100 dark:bg-slate-700', text: 'text-slate-700 dark:text-slate-300', label: 'Autre', emoji: '📦' },
 };
 
+// User's location (lives in Tunis)
+const USER_LOCATION = { lat: 36.8065, lng: 10.1815 };
+
+// Families from Map - same data
+const FAMILIES_DATA = [
+  { _id: '1', name: 'Famille Ben Salah', address: 'Sousse, Khzema', status: 'OK', coordinates: { lat: 35.8245, lng: 10.6369 } },
+  { _id: '2', name: 'Famille Ayadi', address: 'Sfax, Menzel Chaker', status: 'URGENT', coordinates: { lat: 34.7406, lng: 10.7603 } },
+  { _id: '3', name: 'Famille Belghith', address: 'Tunis, Mrezga', status: 'URGENT', coordinates: { lat: 36.8065, lng: 10.1815 } }
+];
+
+// Calculate distance between coordinates
+const calculateDistance = (lat1, lng1, lat2, lng2) => {
+  const R = 6371; // Earth radius in km
+  const φ1 = (lat1 * Math.PI) / 180;
+  const φ2 = (lat2 * Math.PI) / 180;
+  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+  const Δλ = ((lng2 - lng1) * Math.PI) / 180;
+  const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+            Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c * 10) / 10; // km
+};
+
+const MAX_DISTANCE_KM = 50; // Max distance for nearby missions
+
 function formatDate(d) {
   const date = new Date(d);
   return date.toLocaleDateString('fr-FR', {
@@ -40,68 +65,69 @@ function CheckCircleIcon({ className }) {
   );
 }
 
-function MyMissions() {
+function MyMissions({ toggleTheme, isDark }) {
   const [showAllAssigned, setShowAllAssigned] = useState(false);
 
-  // MOCK DATA
-  const openMissions = [
-    {
-      _id: '1',
-      family: { name: 'Famille Khemiri', address: 'Béja Nord' },
-      date: new Date(Date.now() + 86400000).toISOString(),
-      types: ['Social', 'Autre']
-    },
-    {
-      _id: '2',
-      family: { name: 'Famille Zghal', address: 'Sfax, Route Teniour' },
-      date: new Date(Date.now() + 172800000).toISOString(),
-      types: ['Médical']
-    }
-  ];
+  // MOCK DATA - Missions based on families from map
+  const familiesWithDistance = FAMILIES_DATA.map(family => ({
+    ...family,
+    distance: calculateDistance(USER_LOCATION.lat, USER_LOCATION.lng, family.coordinates.lat, family.coordinates.lng)
+  }));
 
-  const assignedMissions = [
-    {
-      _id: '3',
-      family: { name: 'Famille Ben Youssef', address: 'Tunis, Medina' },
-      date: new Date(Date.now() + 3600000).toISOString(),
-      types: ['Alimentaire', 'Social']
-    },
-    {
-      _id: '4',
-      family: { name: 'Famille Gharbi', address: 'Ariana' },
-      date: new Date(Date.now() + 86400000 * 2).toISOString(),
-      types: ['Médical', 'Alimentaire']
-    }
-  ];
+  const nearbyFamilies = familiesWithDistance.filter(f => f.distance <= MAX_DISTANCE_KM);
+  const farFamilies = familiesWithDistance.filter(f => f.distance > MAX_DISTANCE_KM);
 
+  // Open missions (far families - showing as available but with warning)
+  const openMissions = farFamilies.map((family, idx) => ({
+    _id: family._id,
+    family: { name: family.name, address: family.address },
+    date: new Date(Date.now() + 86400000 * (idx + 1)).toISOString(),
+    types: family.status === 'OK' ? ['Alimentaire'] : ['Médical'],
+    distance: family.distance,
+    isFar: true
+  }));
+
+  // Assigned missions (nearby families)
+  const assignedMissions = nearbyFamilies.map((family, idx) => ({
+    _id: family._id,
+    family: { name: family.name, address: family.address },
+    date: new Date(Date.now() + 3600000 + (idx * 86400000)).toISOString(),
+    types: family.status === 'OK' ? ['Alimentaire', 'Suivi'] : ['Médical', 'Urgence'],
+    distance: family.distance,
+    isFar: false
+  }));
+
+  // Completed missions
   const completedMissions = [
     {
-      _id: '5',
-      family: { name: 'Famille Trabelsi', address: 'Bizerte' },
-      date: new Date(Date.now() - 86400000).toISOString(),
-      types: ['Alimentaire']
-    },
-    {
-      _id: '6',
-      family: { name: 'Famille Mansouri', address: 'Sousse' },
+      _id: '1',
+      family: { name: 'Famille Ben Salah', address: 'Sousse' },
       date: new Date(Date.now() - 172800000).toISOString(),
       types: ['Social', 'Médical']
     }
   ];
 
-  const ASSIGNED_DISPLAY_LIMIT = 1;
+  const ASSIGNED_DISPLAY_LIMIT = nearbyFamilies.length;
   const assignedDisplayed = showAllAssigned
     ? assignedMissions
     : assignedMissions.slice(0, ASSIGNED_DISPLAY_LIMIT);
   const hasMoreAssigned = assignedMissions.length > ASSIGNED_DISPLAY_LIMIT;
 
   const MissionCard = ({ v, type }) => (
-    <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-600 p-5 shadow-sm hover:shadow-md transition-shadow">
+    <div className={`rounded-xl border p-5 shadow-sm hover:shadow-md transition-shadow ${
+      v.isFar 
+        ? 'bg-orange-50 dark:bg-orange-900/10 border-orange-200 dark:border-orange-800' 
+        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600'
+    }`}>
       <div className="flex flex-wrap items-center gap-2 mb-2">
         <h3 className="font-semibold text-lg text-slate-800 dark:text-slate-100">
           Visite prévue — {v.family?.name}
         </h3>
-        {type === 'assigned' ? (
+        {v.isFar ? (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300">
+            Loin de vous
+          </span>
+        ) : type === 'assigned' ? (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300">
             Mission assignée
           </span>
@@ -111,11 +137,27 @@ function MyMissions() {
           </span>
         )}
       </div>
+      
       <p className="text-sm text-slate-600 dark:text-slate-400 mb-3 flex items-center gap-2">
         <span aria-hidden>🕒</span> {formatDate(v.date)}
         <span className="text-slate-300 dark:text-slate-600">|</span>
         <span aria-hidden>📍</span> {v.family?.address}
+        {v.distance && (
+          <>
+            <span className="text-slate-300 dark:text-slate-600">|</span>
+            <span aria-hidden>📏</span> <strong>{v.distance} km</strong>
+          </>
+        )}
       </p>
+
+      {v.isFar && (
+        <div className="mb-4 p-3 bg-orange-100 dark:bg-orange-900/30 border border-orange-300 dark:border-orange-700 rounded-lg">
+          <p className="text-sm text-orange-800 dark:text-orange-200">
+            ⚠️ Cette mission est trop loin de vous ({v.distance} km &gt; {MAX_DISTANCE_KM} km). Vous pouvez la prendre, mais cherchez d'abord les missions proches.
+          </p>
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-2 mb-4">
         {v.types?.map((typeKey) => {
           const style = TYPE_STYLES[typeKey] || TYPE_STYLES.Autre;
@@ -143,59 +185,48 @@ function MyMissions() {
       <AppNavbar activeRoute="missions" />
       <main className="max-w-4xl mx-auto px-4 py-8 safe-area-bottom">
         
-        {/* OPEN MISSIONS */}
+        {/* NEARBY MISSIONS */}
         <section className="mb-10">
           <div className="mb-4">
             <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              <span aria-hidden>🟢</span> Missions ouvertes
+              <span aria-hidden>🟢</span> Missions près de vous
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-              Missions qui n'ont pas encore de bénévoles assignés.
+              Familles à proximité (moins de {MAX_DISTANCE_KM} km) - Priorité recommandée.
+            </p>
+          </div>
+          {assignedMissions.length === 0 ? (
+            <div className="p-6 text-center rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <p className="text-slate-500 dark:text-slate-400">Aucune mission proche pour le moment.</p>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {assignedDisplayed.map((v) => (
+                <MissionCard key={v._id} v={v} type="nearby" />
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* FAR MISSIONS */}
+        <section className="mb-10">
+          <div className="mb-4">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <span aria-hidden>🟠</span> Autres missions disponibles
+            </h2>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+              Familles éloignées (plus de {MAX_DISTANCE_KM} km) - Explorez après les missions proches.
             </p>
           </div>
           {openMissions.length === 0 ? (
             <div className="p-6 text-center rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-              <p className="text-slate-500 dark:text-slate-400">Aucune mission ouverte pour le moment.</p>
+              <p className="text-slate-500 dark:text-slate-400">Aucune autre mission disponible.</p>
             </div>
           ) : (
             <div className="grid gap-4">
               {openMissions.map((v) => (
                 <MissionCard key={v._id} v={v} type="open" />
               ))}
-            </div>
-          )}
-        </section>
-
-        {/* ASSIGNED MISSIONS */}
-        <section className="mb-10">
-          <div className="mb-4">
-            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              <span aria-hidden>🔵</span> Mes missions assignées
-            </h2>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-              Les missions qui vous sont actuellement attribuées.
-            </p>
-          </div>
-          {assignedMissions.length === 0 ? (
-            <div className="p-6 text-center rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-              <p className="text-slate-500 dark:text-slate-400">Vous n'avez aucune mission assignée.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="grid gap-4">
-                {assignedDisplayed.map((v) => (
-                  <MissionCard key={v._id} v={v} type="assigned" />
-                ))}
-              </div>
-              {hasMoreAssigned && (
-                <button
-                  type="button"
-                  onClick={() => setShowAllAssigned(!showAllAssigned)}
-                  className="inline-flex items-center justify-center w-full min-h-[44px] py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
-                >
-                  {showAllAssigned ? 'Réduire' : `Voir toutes mes missions (${assignedMissions.length})`}
-                </button>
-              )}
             </div>
           )}
         </section>
@@ -213,7 +244,7 @@ function MyMissions() {
             <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
               <div className="divide-y divide-slate-100 dark:divide-slate-700/50">
                 {completedMissions.map((v) => (
-                  <div key={v._id} className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                  <Link key={v._id} to={`/families/${v._id}`} className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors cursor-pointer">
                     <div className="flex items-center gap-4 flex-1 min-w-0">
                       <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center text-green-600 dark:text-green-400">
                         <CheckCircleIcon className="w-6 h-6" />
@@ -245,7 +276,7 @@ function MyMissions() {
                         {formatRelativeDate(v.date)}
                       </span>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>

@@ -9,7 +9,7 @@ const ROLES = [
   { value: 'ADMIN', label: 'Administrateur' },
 ];
 
-function Users() {
+function Users({ toggleTheme, isDark }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -37,7 +37,7 @@ function Users() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100">
-      <AppNavbar activeRoute="users" />
+      <AppNavbar activeRoute="users" toggleTheme={toggleTheme} isDark={isDark} />
       <main className="max-w-md mx-auto px-4 py-8">
         <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-600 p-6 shadow-sm">
           <h2 className="text-lg font-medium text-slate-800 dark:text-slate-100 mb-4">Créer un utilisateur</h2>

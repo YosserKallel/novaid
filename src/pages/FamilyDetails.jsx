@@ -29,46 +29,107 @@ function formatDate(dateStr) {
   });
 }
 
-function FamilyDetails() {
+function FamilyDetails({ toggleTheme, isDark }) {
   const { id } = useParams();
   
-  // MOCK DATA
-  const mockFamily = {
-    _id: id || '1',
-    name: 'Famille Ben Salah',
-    address: 'Sousse, Khzema',
-    phone: '+216 22 334 455',
-    status: 'URGENT',
-    needs: ['Alimentaire', 'Médical'],
-    membersCount: 5,
-    familyHistory: 'Situation fragile suite a perte d emploi',
-    needsDetails: {
-      medications: ['Insuline', 'Paracetamol'],
-      clothing: []
+  // MOCK DATA - Different families based on ID
+  const familiesData = {
+    '1': {
+      _id: '1',
+      name: 'Famille Ben Salah',
+      address: 'Sousse, Khzema',
+      phone: '+216 22 334 455',
+      status: 'OK',
+      needs: ['Alimentaire', 'Médical'],
+      membersCount: 5,
+      familyHistory: 'Situation stabilisée, famille visitée régulièrement',
+      needsDetails: {
+        medications: ['Insuline', 'Paracetamol'],
+        clothing: []
+      }
+    },
+    '2': {
+      _id: '2',
+      name: 'Famille Ayadi',
+      address: 'Sfax, Menzel Chaker',
+      phone: '+216 98 765 432',
+      status: 'URGENT',
+      needs: ['Alimentaire', 'Logement'],
+      membersCount: 7,
+      familyHistory: 'Situation précaire, besoin urgent de soutien',
+      needsDetails: {
+        medications: [],
+        clothing: ['Vêtements d\'hiver']
+      }
+    },
+    '3': {
+      _id: '3',
+      name: 'Famille Belghith',
+      address: 'Tunis, Mrezga',
+      phone: '+216 55 123 789',
+      status: 'URGENT',
+      needs: ['Médical', 'Scolaire'],
+      membersCount: 4,
+      familyHistory: 'Enfants scolarisés, mère malade, père au chômage',
+      needsDetails: {
+        medications: ['Antibiotiques'],
+        clothing: []
+      }
     }
   };
+  
+  const mockFamily = familiesData[id] || familiesData['1'];
 
-  const [visits, setVisits] = useState([
-    {
-      _id: 'v1',
-      date: new Date('2026-04-21T02:24:00Z').toISOString(),
-      status: 'PLANNED',
-      volunteer: null,
-      types: ['Médical'],
-      proofPhoto: null,
-      notes: ''
-    },
-    {
-      _id: 'v2',
-      date: new Date('2026-03-15T14:30:00Z').toISOString(),
-      status: 'COMPLETED',
-      volunteer: { name: 'Ahmed B.' },
-      types: ['Alimentaire'],
-      proofPhoto: null,
-      notes: 'Colis alimentaire mensuel déposé.',
-      checkInLocation: true
-    }
-  ]);
+  // Determine visit status based on family status
+  const isUrgent = mockFamily.status === 'URGENT';
+  
+  const [visits, setVisits] = useState(
+    isUrgent
+      ? [
+          {
+            _id: 'v1',
+            date: new Date('2026-04-21T10:00:00Z').toISOString(),
+            status: 'COMPLETED',
+            volunteer: { name: 'Fatima Ben Mahmoud' },
+            types: ['Évaluation', 'Alimentaire'],
+            proofPhoto: null,
+            notes: 'Visite d\'évaluation et première aide d\'urgence',
+            checkInLocation: true
+          },
+          {
+            _id: 'v2',
+            date: new Date('2026-05-05T14:30:00Z').toISOString(),
+            status: 'PLANNED',
+            volunteer: null,
+            types: ['Médical', 'Suivi'],
+            proofPhoto: null,
+            notes: 'Visite de suivi médical prévue',
+            checkInLocation: false
+          }
+        ]
+      : [
+          {
+            _id: 'v1',
+            date: new Date('2026-04-21T02:24:00Z').toISOString(),
+            status: 'COMPLETED',
+            volunteer: { name: 'Ahmed Ben Salah' },
+            types: ['Médical'],
+            proofPhoto: null,
+            notes: '',
+            checkInLocation: true
+          },
+          {
+            _id: 'v2',
+            date: new Date('2026-03-15T14:30:00Z').toISOString(),
+            status: 'COMPLETED',
+            volunteer: { name: 'Leila Hakim' },
+            types: ['Alimentaire'],
+            proofPhoto: null,
+            notes: 'Colis alimentaire mensuel déposé.',
+            checkInLocation: true
+          }
+        ]
+  );
 
   const [isVisitModalOpen, setIsVisitModalOpen] = useState(false);
   const [validatingId, setValidatingId] = useState(null);
@@ -90,12 +151,82 @@ function FamilyDetails() {
   };
 
   const generateImpactReport = () => {
-    window.alert('Simulation: Le PDF "Rapport_Impact.pdf" est en cours de téléchargement.');
+    // Generate comprehensive report content
+    const reportContent = `
+RAPPORT FAMILLE NOVAID
+${'='.repeat(80)}
+
+INFORMATIONS GÉNÉRALES
+${'─'.repeat(80)}
+Nom: ${mockFamily.name}
+Adresse: ${mockFamily.address}
+Téléphone: ${mockFamily.phone}
+Statut: ${mockFamily.status}
+Nombre de membres: ${mockFamily.membersCount}
+
+BESOINS IDENTIFIÉS
+${'─'.repeat(80)}
+${mockFamily.needs.join('\n')}
+
+HISTORIQUE FAMILIAL
+${'─'.repeat(80)}
+${mockFamily.familyHistory}
+
+DÉTAIL DES BESOINS
+${'─'.repeat(80)}
+Médicaments: ${mockFamily.needsDetails.medications.length > 0 ? mockFamily.needsDetails.medications.join(', ') : 'Aucun'}
+Vêtements: ${mockFamily.needsDetails.clothing.length > 0 ? mockFamily.needsDetails.clothing.join(', ') : 'Aucun'}
+
+HISTOIRE D'IMPACT
+${'─'.repeat(80)}
+${generateImpactStory(mockFamily, visits)}
+
+HISTORIQUE DES VISITES
+${'─'.repeat(80)}
+${[...visits].sort((a, b) => new Date(b.date) - new Date(a.date)).map((visit, idx) => {
+  const isPlanned = visit.status === 'PLANNED' || (visit.status !== 'COMPLETED' && new Date(visit.date) > new Date());
+  const statusText = isPlanned ? 'Planifiée' : 'Réalisée';
+  const dateStr = formatDate(visit.date);
+  const volunteerText = visit.volunteer?.name ? `\nBénévole: ${visit.volunteer.name}` : '';
+  const typesText = visit.types?.length > 0 ? `\nTypes d'aide: ${visit.types.join(', ')}` : '';
+  const notesText = visit.notes ? `\nNotes: ${visit.notes}` : '';
+  const gpsText = visit.checkInLocation ? '\n📍 Validée par GPS' : '';
+  
+  return `
+Visite ${idx + 1}:
+─────────────
+Date: ${dateStr}
+Statut: ${statusText}${volunteerText}${typesText}${gpsText}${notesText}`;
+}).join('\n')}
+
+RAPPORT GÉNÉRÉ LE: ${new Date().toLocaleDateString('fr-FR', { 
+  day: 'numeric', 
+  month: 'long', 
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit'
+})}
+
+${'='.repeat(80)}
+Généré par NOVAID - Système de Gestion des Familles
+`;
+
+    // Create blob and download
+    const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Rapport_${mockFamily.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.txt`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100">
-      <AppNavbar />
+      <AppNavbar toggleTheme={toggleTheme} isDark={isDark} />
       <main className="max-w-3xl mx-auto px-4 py-8">
         {/* En-tête famille */}
         <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-600 p-6 mb-8">
@@ -160,8 +291,11 @@ function FamilyDetails() {
           isOpen={isVisitModalOpen}
           onClose={() => setIsVisitModalOpen(false)}
           selectedFamily={mockFamily}
-          onSuccess={() => {
-            alert('Nouvelle visite simulée !');
+          onSuccess={(newVisit) => {
+            if (newVisit) {
+              setVisits(prev => [newVisit, ...prev]);
+              alert('Nouvelle visite enregistrée !');
+            }
             setIsVisitModalOpen(false);
           }}
         />
@@ -174,7 +308,7 @@ function FamilyDetails() {
           <div className="relative mt-6">
             <div className="absolute left-4 top-0 bottom-0 w-px bg-slate-200 dark:bg-slate-600" />
             <ul className="space-y-0">
-              {visits.map((visit) => {
+              {[...visits].sort((a, b) => new Date(b.date) - new Date(a.date)).map((visit) => {
                 const isPlanned =
                   visit.status === 'PLANNED' ||
                   (visit.status !== 'COMPLETED' && new Date(visit.date) > new Date());

@@ -16,14 +16,32 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
+// Create custom colored icons for markers
+const createColoredIcon = (color) => {
+  const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+    <circle cx="16" cy="16" r="10" fill="${color}" stroke="white" stroke-width="2"/>
+  </svg>`;
+  
+  return L.icon({
+    iconUrl: `data:image/svg+xml;base64,${btoa(svgIcon)}`,
+    iconSize: [20, 20],
+    iconAnchor: [10, 20],
+    popupAnchor: [0, -20],
+    className: 'custom-marker'
+  });
+};
+
+const redIcon = createColoredIcon('#f04e4e');
+const greenIcon = createColoredIcon('#22c87a');
+
 const TUNISIA_CENTER = [34.0, 9.0];
 const DEFAULT_ZOOM = 5;
 
 // Mock families data specifically matching the 3 points in the screenshot
 const families = [
-  { _id: '1', name: 'Famille A', status: 'URGENT', coordinates: { lat: 36.8065, lng: 10.1815 } },
-  { _id: '2', name: 'Famille B', status: 'OK', coordinates: { lat: 35.6, lng: 9.8 } },
-  { _id: '3', name: 'Famille C', status: 'URGENT', coordinates: { lat: 34.8, lng: 10.2 } }
+  { _id: '1', name: 'Famille Ben Salah', location: 'Sousse, Khzema', status: 'OK', coordinates: { lat: 35.8245, lng: 10.6369 } },
+  { _id: '2', name: 'Famille Ayadi', location: 'Sfax, Menzel Chaker', status: 'URGENT', coordinates: { lat: 34.7406, lng: 10.7603 } },
+  { _id: '3', name: 'Famille Belghith', location: 'Tunis, Mrezga', status: 'URGENT', coordinates: { lat: 36.8065, lng: 10.1815 } }
 ];
 
 function StatusBadge({ status }) {
@@ -39,7 +57,7 @@ function StatusBadge({ status }) {
   );
 }
 
-function Map() {
+function Map({ toggleTheme, isDark }) {
   const [showHeatmap, setShowHeatmap] = useState(true);
 
   const count = families.length;
@@ -47,7 +65,7 @@ function Map() {
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-900">
-      <AppNavbar activeRoute="map" />
+      <AppNavbar activeRoute="map" toggleTheme={toggleTheme} isDark={isDark} />
       
       <div className="px-4 py-2 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-600 flex justify-end">
         <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
@@ -81,6 +99,7 @@ function Map() {
             <Marker
               key={family._id}
               position={[family.coordinates.lat, family.coordinates.lng]}
+              icon={family.status === 'URGENT' ? redIcon : greenIcon}
             >
               <Popup>
                 <div className="min-w-[180px]">

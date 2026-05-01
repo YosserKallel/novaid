@@ -16,6 +16,7 @@ function AddVisitModal({ isOpen, onClose, selectedFamily, onSuccess }) {
   const [dateTime, setDateTime] = useState(() => toDatetimeLocal(new Date()));
   const [status, setStatus] = useState('COMPLETED');
   const [types, setTypes] = useState([]);
+  const [customAutre, setCustomAutre] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -23,6 +24,7 @@ function AddVisitModal({ isOpen, onClose, selectedFamily, onSuccess }) {
       setDateTime(toDatetimeLocal(new Date()));
       setStatus('COMPLETED');
       setTypes([]);
+      setCustomAutre('');
     }
   }, [isOpen]);
 
@@ -36,11 +38,30 @@ function AddVisitModal({ isOpen, onClose, selectedFamily, onSuccess }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (types.length === 0) {
+      alert('Veuillez sélectionner au moins un type d\'aide');
+      return;
+    }
+    if (types.includes('Autre') && !customAutre.trim()) {
+      alert('Veuillez spécifier le type d\'aide "Autre"');
+      return;
+    }
     setSubmitting(true);
     // Simulation simple sans backend
     setTimeout(() => {
+      const finalTypes = types.map(t => t === 'Autre' ? `Autre: ${customAutre}` : t);
+      const newVisit = {
+        _id: 'v_' + Date.now(),
+        date: new Date(dateTime).toISOString(),
+        status: status,
+        volunteer: { name: 'Nouveau bénévole' },
+        types: finalTypes,
+        proofPhoto: null,
+        notes: 'Visite enregistrée via le formulaire',
+        checkInLocation: status === 'COMPLETED'
+      };
       setSubmitting(false);
-      onSuccess?.();
+      onSuccess?.(newVisit);
     }, 800);
   };
 
@@ -114,6 +135,20 @@ function AddVisitModal({ isOpen, onClose, selectedFamily, onSuccess }) {
                   </label>
                 ))}
               </div>
+              {types.includes('Autre') && (
+                <div className="mt-3 pt-3 border-t border-slate-300 dark:border-slate-500">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Spécifier le type d'aide
+                  </label>
+                  <input
+                    type="text"
+                    value={customAutre}
+                    onChange={(e) => setCustomAutre(e.target.value)}
+                    placeholder="Ex: Transport, Équipement, etc."
+                    className="w-full min-h-[44px] px-3 py-3 border border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              )}
             </div>
 
           </div>

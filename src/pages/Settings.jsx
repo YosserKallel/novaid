@@ -1,126 +1,135 @@
 import React from 'react';
+import { Settings as SettingsIcon, Type } from 'lucide-react';
 import AppNavbar from '../components/AppNavbar';
 import { usePreferences } from '../context/PreferencesContext';
 
 const FONT_OPTIONS = [
-  { value: 'base', label: 'Taille Standard', iconClass: 'text-sm font-semibold' },
-  { value: 'lg', label: 'Taille Moyenne', iconClass: 'text-base font-semibold' },
-  { value: 'xl', label: 'Taille Grande', iconClass: 'text-lg font-bold' },
+  { value: 'base', label: 'Standard', size: 'text-sm' },
+  { value: 'lg', label: 'Moyen', size: 'text-base' },
+  { value: 'xl', label: 'Grand', size: 'text-lg' },
 ];
 
 const FONT_WEIGHT_OPTIONS = [
-  { value: 'normal', label: 'Normale', iconClass: 'font-normal' },
-  { value: 'medium', label: 'Moyenne (Medium)', iconClass: 'font-medium' },
-  { value: 'bold', label: 'Grasse (Bold)', iconClass: 'font-bold' },
+  { value: 'normal', label: 'Normale', weight: 'font-normal' },
+  { value: 'medium', label: 'Medium', weight: 'font-medium' },
+  { value: 'bold', label: 'Gras', weight: 'font-bold' },
 ];
 
-export default function Settings() {
+function Settings({ toggleTheme, isDark }) {
   const { fontSize, setFontSize, fontWeight, setFontWeight } = usePreferences();
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100">
-      <AppNavbar activeRoute="settings" />
-      <main className="max-w-2xl mx-auto px-4 py-8">
-        
+    <div className="page-container">
+      <AppNavbar activeRoute="settings" toggleTheme={toggleTheme} isDark={isDark} />
+      
+      <main className="page-main max-w-2xl">
+        {/* PAGE HEADER */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <span aria-hidden>⚙️</span> Paramètres d'Affichage
+          <h1 className="page-title flex items-center gap-3">
+            <SettingsIcon size={32} style={{ color: 'var(--color-blue)' }} />
+            Paramètres
           </h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-            Personnalisez l'affichage de l'application selon vos préférences visuelles.
-          </p>
+          <p className="text-secondary">Personnalisez l'affichage de l'application</p>
         </div>
 
-        <section className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 mb-6 shadow-sm">
-          <h2 className="text-lg font-semibold mb-2">Taille du texte</h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mb-5">
-            Choisissez une taille de texte plus lisible si nécessaire.
-          </p>
-          <div className="flex flex-wrap gap-3">
-            {FONT_OPTIONS.map(({ value, label, iconClass }) => {
+        {/* FONT SIZE SECTION */}
+        <section className="card mb-6">
+          <h2 className="text-lg font-semibold text-primary mb-1 flex items-center gap-2">
+            <Type size={20} />
+            Taille du Texte
+          </h2>
+          <p className="text-sm text-secondary mb-5">Choisissez une taille pour mieux lire.</p>
+          
+          <div className="flex flex-wrap gap-3 mb-6">
+            {FONT_OPTIONS.map(({ value, label, size }) => {
               const isSelected = fontSize === value;
               return (
                 <button
                   key={value}
                   type="button"
                   onClick={() => setFontSize(value)}
-                  className={`inline-flex items-center gap-2 min-h-[44px] px-5 py-3 rounded-lg border-2 font-medium transition-colors ${
+                  className={`inline-flex items-center justify-center min-h-[48px] px-6 py-3 rounded-lg border-2 font-medium transition-all ${
                     isSelected
-                      ? 'border-blue-600 bg-blue-50 text-blue-800 dark:border-blue-500 dark:bg-blue-900/30 dark:text-blue-200 shadow-sm'
-                      : 'border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-500'
+                      ? 'border-blue-500 bg-blue-500/20 text-blue-400'
+                      : 'border-muted bg-elevated text-secondary hover:border-blue-500/50'
                   }`}
-                  aria-pressed={isSelected}
                 >
-                  <span className={`inline-flex items-center justify-center w-8 h-8 shrink-0 rounded bg-white/50 dark:bg-slate-900/50 ${iconClass}`} aria-hidden>
-                    A
-                  </span>
-                  <span>{label}</span>
+                  <span className={`${size}`}>{label}</span>
                 </button>
               );
             })}
           </div>
-          <p className={`mt-5 text-slate-800 dark:text-slate-200 italic bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg border border-slate-100 dark:border-slate-700/50 transition-all ${
-            fontSize === 'base' ? 'text-base' : fontSize === 'lg' ? 'text-lg' : 'text-xl'
-          } ${
-            fontWeight === 'normal' ? 'font-normal' : fontWeight === 'medium' ? 'font-medium' : 'font-bold'
-          }`}>
-            Aperçu : Voici comment le texte "standard" s'affichera dans l'application... (Aperçu activé localement)
-          </p>
+
+          {/* PREVIEW */}
+          <div className="p-5 rounded-lg border border-blue-500/20 bg-blue-500/5">
+            <p className={`text-secondary italic transition-all ${
+              fontSize === 'base' ? 'text-base' : fontSize === 'lg' ? 'text-lg' : 'text-xl'
+            } ${
+              fontWeight === 'normal' ? 'font-normal' : fontWeight === 'medium' ? 'font-medium' : 'font-bold'
+            }`}>
+              Aperçu: Voici comment le texte s'affichera dans l'application avec ces paramètres.
+            </p>
+          </div>
         </section>
 
-        <section className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm mb-6">
-          <h2 className="text-lg font-semibold mb-2">Graisse du texte (Épaisseur)</h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mb-5">
-            Augmentez l'épaisseur de la police pour un meilleur contraste visuel.
-          </p>
-          <div className="flex flex-wrap gap-3">
-            {FONT_WEIGHT_OPTIONS.map(({ value, label, iconClass }) => {
+        {/* FONT WEIGHT SECTION */}
+        <section className="card mb-8">
+          <h2 className="text-lg font-semibold text-primary mb-1 flex items-center gap-2">
+            <Type size={20} />
+            Épaisseur du Texte
+          </h2>
+          <p className="text-sm text-secondary mb-5">Augmentez pour un meilleur contraste.</p>
+          
+          <div className="flex flex-wrap gap-3 mb-6">
+            {FONT_WEIGHT_OPTIONS.map(({ value, label, weight }) => {
               const isSelected = fontWeight === value;
               return (
                 <button
                   key={value}
                   type="button"
                   onClick={() => setFontWeight(value)}
-                  className={`inline-flex items-center gap-2 min-h-[44px] px-5 py-3 rounded-lg border-2 font-medium transition-colors ${
+                  className={`inline-flex items-center justify-center min-h-[48px] px-6 py-3 rounded-lg border-2 font-medium transition-all ${
                     isSelected
-                      ? 'border-blue-600 bg-blue-50 text-blue-800 dark:border-blue-500 dark:bg-blue-900/30 dark:text-blue-200 shadow-sm'
-                      : 'border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-500'
+                      ? 'border-blue-500 bg-blue-500/20 text-blue-400'
+                      : 'border-muted bg-elevated text-secondary hover:border-blue-500/50'
                   }`}
-                  aria-pressed={isSelected}
                 >
-                  <span className={`inline-flex items-center justify-center w-8 h-8 shrink-0 rounded bg-white/50 dark:bg-slate-900/50 text-base ${iconClass}`} aria-hidden>
-                    A
-                  </span>
-                  <span>{label}</span>
+                  <span className={`${weight}`}>{label}</span>
                 </button>
               );
             })}
           </div>
-          <p className={`mt-5 text-slate-800 dark:text-slate-200 italic bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg border border-slate-100 dark:border-slate-700/50 transition-all ${
-            fontSize === 'base' ? 'text-base' : fontSize === 'lg' ? 'text-lg' : 'text-xl'
-          } ${
-            fontWeight === 'normal' ? 'font-normal' : fontWeight === 'medium' ? 'font-medium' : 'font-bold'
-          }`}>
-            Aperçu : Observez la différence de contraste des caractères pour choisir la meilleure option de lecture.
-          </p>
+
+          {/* PREVIEW */}
+          <div className="p-5 rounded-lg border border-blue-500/20 bg-blue-500/5">
+            <p className={`text-secondary italic transition-all ${
+              fontSize === 'base' ? 'text-base' : fontSize === 'lg' ? 'text-lg' : 'text-xl'
+            } ${
+              fontWeight === 'normal' ? 'font-normal' : fontWeight === 'medium' ? 'font-medium' : 'font-bold'
+            }`}>
+              Aperçu: Observez la différence de contraste avec l'option sélectionnée.
+            </p>
+          </div>
         </section>
 
-        <div className="flex justify-end gap-3 mt-8">
+        {/* ACTION BUTTONS */}
+        <div className="flex justify-end gap-3">
           <button 
             onClick={() => { setFontSize('base'); setFontWeight('normal'); }}
-            className="px-6 py-2.5 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-medium hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+            className="btn btn-outline"
           >
             Réinitialiser
           </button>
           <button 
-            onClick={() => alert('Préférences sauvegardées et appliquées à tout le site !')}
-            className="px-6 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors shadow-sm"
+            onClick={() => alert('Préférences sauvegardées !')}
+            className="btn btn-primary"
           >
-            Enregistrer les préférences
+            Enregistrer
           </button>
         </div>
-
       </main>
     </div>
   );
 }
+
+export default Settings;

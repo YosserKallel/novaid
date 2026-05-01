@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import AppNavbar from '../components/AppNavbar';
 
-const ALLOWED_RADIUS_METERS = 100;
+const ALLOWED_RADIUS_METERS = 500;
 
 const STEP = {
   LOADING_VISIT: 'loading_visit',
@@ -13,7 +13,63 @@ const STEP = {
   ERROR: 'error',
 };
 
-function VisitCheckin() {
+// User's location (lives in Tunis)
+const USER_LOCATION = { lat: 36.8065, lng: 10.1815 };
+
+// Mission locations database with real Tunisian coordinates
+const MISSIONS_DB = {
+  '1': {
+    id: '1',
+    family: 'Famille Ben Salah',
+    address: 'Sousse, Khzema',
+    lat: 35.8245,
+    lng: 10.6369,
+    nearbyPlaces: [
+      { name: 'Centre Ville de Sousse', lat: 35.8265, lng: 10.6383 },
+      { name: 'Médina de Sousse', lat: 35.8300, lng: 10.6400 },
+      { name: 'Ribat de Sousse', lat: 35.8280, lng: 10.6360 }
+    ]
+  },
+  '2': {
+    id: '2',
+    family: 'Famille Ayadi',
+    address: 'Sfax, Menzel Chaker',
+    lat: 34.7406,
+    lng: 10.7603,
+    nearbyPlaces: [
+      { name: 'Centre Ville de Sfax', lat: 34.7405, lng: 10.7606 },
+      { name: 'Médina de Sfax', lat: 34.7389, lng: 10.7644 },
+      { name: 'Port de Sfax', lat: 34.7144, lng: 10.7744 }
+    ]
+  },
+  '3': {
+    id: '3',
+    family: 'Famille Belghith',
+    address: 'Tunis, Mrezga',
+    lat: 36.8065,
+    lng: 10.1815,
+    nearbyPlaces: [
+      { name: 'Médina de Tunis', lat: 36.7970, lng: 10.1685 },
+      { name: 'Souks de Tunis', lat: 36.7975, lng: 10.1650 },
+      { name: 'Centre Ville Tunis', lat: 36.8100, lng: 10.1900 }
+    ]
+  }
+};
+
+// Calculate distance between two GPS coordinates in meters
+const calculateDistance = (lat1, lng1, lat2, lng2) => {
+  const R = 6371000; // Earth radius in meters
+  const φ1 = (lat1 * Math.PI) / 180;
+  const φ2 = (lat2 * Math.PI) / 180;
+  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+  const Δλ = ((lng2 - lng1) * Math.PI) / 180;
+  const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+            Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c);
+};
+
+function VisitCheckin({ toggleTheme, isDark }) {
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -22,35 +78,57 @@ function VisitCheckin() {
   const [position, setPosition] = useState(null);
   const [distanceMeters, setDistanceMeters] = useState(null);
   const [proofPhoto, setProofPhoto] = useState('');
-
-  // Mock Visit Data
-  const targetLat = 36.8065;
-  const targetLng = 10.1815;
+  const [missionData, setMissionData] = useState(null);
 
   useEffect(() => {
-    // 1. Simuler le chargement de la visite
-    const timer = setTimeout(() => {
-      setStep(STEP.GETTING_POSITION);
-    }, 1000);
-    return () => clearTimeout(timer);
+    // 1. Load mission data
+    const mission = MISSIONS_DB[id];
+    if (mission) {
+      setMissionData(mission);
+      const timer = setTimeout(() => {
+        setStep(STEP.GETTING_POSITION);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else {
+      setError('Mission not found');
+    }
   }, [id]);
 
   useEffect(() => {
-    if (step !== STEP.GETTING_POSITION) return;
+    if (step !== STEP.GETTING_POSITION || !missionData) return;
 
-    // 2. Simuler la recherche GPS (Mock location to be slightly off)
-    const timer2 = setTimeout(() => {
-      const mockPos = { lat: 36.8068, lng: 10.1818, accuracy: 15 };
-      setPosition(mockPos);
-      
-      // Calculate fake distance (approx)
-      const dist = 45; // m
+    // Get real user position using browser geolocation API
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (geolocationPos) => {
+          const userLat = geolocationPos.coords.latitude;
+          const userLng = geolocationPos.coords.longitude;
+
+          setPosition({ lat: userLat, lng: userLng });
+          
+          // Calculate real distance
+          const dist = calculateDistance(userLat, userLng, missionData.lat, missionData.lng);
+          setDistanceMeters(dist);
+
+          setStep(STEP.POSITION_FOUND);
+        },
+        (err) => {
+          // Fallback: Use default Tunis location if geolocation denied
+          console.warn('Geolocation error:', err);
+          setPosition(USER_LOCATION);
+          const dist = calculateDistance(USER_LOCATION.lat, USER_LOCATION.lng, missionData.lat, missionData.lng);
+          setDistanceMeters(dist);
+          setStep(STEP.POSITION_FOUND);
+        }
+      );
+    } else {
+      // Geolocation not supported - use default Tunis location
+      setPosition(USER_LOCATION);
+      const dist = calculateDistance(USER_LOCATION.lat, USER_LOCATION.lng, missionData.lat, missionData.lng);
       setDistanceMeters(dist);
-
       setStep(STEP.POSITION_FOUND);
-    }, 1500);
-    return () => clearTimeout(timer2);
-  }, [step]);
+    }
+  }, [step, missionData]);
 
   const handleProofPhotoChange = (e) => {
     const file = e.target.files?.[0];
@@ -71,6 +149,13 @@ function VisitCheckin() {
   const distance = distanceMeters;
   const withinRadius = distance != null && distance <= ALLOWED_RADIUS_METERS;
   const canValidate = withinRadius;
+
+  // Format distance for display
+  const formatDistance = (meters) => {
+    if (meters == null) return '—';
+    if (meters < 1000) return `${meters} m`;
+    return `${(meters / 1000).toFixed(1)} km`;
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col">
@@ -103,12 +188,18 @@ function VisitCheckin() {
             </div>
           )}
 
-          {step === STEP.POSITION_FOUND && position && (
+          {step === STEP.POSITION_FOUND && position && missionData && (
             <div className="animate-fade-in text-left">
+              <div className="mb-4 pb-4 border-b border-slate-200 dark:border-slate-600">
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Mission</p>
+                <p className="font-semibold text-slate-800 dark:text-slate-100">{missionData.family}</p>
+                <p className="text-sm text-slate-600 dark:text-slate-400">{missionData.address}</p>
+              </div>
+
               <div className="p-4 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl text-sm font-mono space-y-2.5 text-slate-700 dark:text-slate-300 mb-6">
                 <p className="flex justify-between border-b pb-2 border-slate-200 dark:border-slate-600">
                   <span className="text-slate-500 dark:text-slate-400">📍 Cible</span> 
-                  <span>[{targetLat.toFixed(4)}, {targetLng.toFixed(4)}]</span>
+                  <span>[{missionData.lat.toFixed(4)}, {missionData.lng.toFixed(4)}]</span>
                 </p>
                 <p className="flex justify-between border-b pb-2 border-slate-200 dark:border-slate-600">
                   <span className="text-slate-500 dark:text-slate-400">🚶 Ma position</span> 
@@ -116,7 +207,7 @@ function VisitCheckin() {
                 </p>
                 <p className="flex justify-between font-medium">
                   <span className="text-slate-500 dark:text-slate-400">📏 Distance</span> 
-                  <span className={withinRadius ? "text-green-600 dark:text-green-400" : "text-red-500"}>{distanceMeters} m</span>
+                  <span className={withinRadius ? "text-green-600 dark:text-green-400" : "text-red-500"}>{formatDistance(distanceMeters)}</span>
                 </p>
               </div>
 
@@ -126,10 +217,12 @@ function VisitCheckin() {
                   <p className="text-sm text-green-800 dark:text-green-200 font-medium">Excellente position. Presque sur place.</p>
                 </div>
               ) : (
-                <div className="mb-6 p-4 flex items-center gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/60 rounded-xl">
-                  <span aria-hidden className="text-xl">⛔</span>
-                  <p className="text-sm text-red-800 dark:text-red-200 font-medium">Vous êtes trop éloigné ({distanceMeters} m &gt; {ALLOWED_RADIUS_METERS} m).</p>
-                </div>
+                <>
+                  <div className="mb-6 p-4 flex items-center gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/60 rounded-xl">
+                    <span aria-hidden className="text-xl">⚠️</span>
+                    <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">Vous êtes trop éloigné. Rapprochez-vous de la famille pour valider la visite.</p>
+                  </div>
+                </>
               )}
 
               <div className="mb-6">
