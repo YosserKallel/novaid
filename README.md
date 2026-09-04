@@ -1,5 +1,21 @@
 # React + Vite
 
+## Local AI summaries
+
+The family impact page can generate a concise French summary with a local Ollama model. This does not require a paid API key.
+
+1. Install Ollama from https://ollama.com/download.
+2. Download and start the configured model:
+
+```powershell
+ollama run qwen2.5:3b
+```
+
+3. Start the Spring Boot backend from `backend` and the Vite frontend from the project root.
+4. Open a family record and select **Generer avec IA**.
+
+The backend endpoint is `POST /api/ai/impact-summary`. It uses `http://localhost:11434/v1` and `qwen2.5:3b` by default. These settings can be overridden with `OPENAI_BASE_URL` and `OPENAI_MODEL`; `OPENAI_API_KEY` is optional for compatible hosted providers.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

@@ -136,6 +136,36 @@ function FamilyDetails({ toggleTheme, isDark }) {
   const [isVisitModalOpen, setIsVisitModalOpen] = useState(false);
   const [validatingId, setValidatingId] = useState(null);
   const [lightboxImage, setLightboxImage] = useState(null);
+  const [aiSummary, setAiSummary] = useState('');
+  const [isGeneratingAiSummary, setIsGeneratingAiSummary] = useState(false);
+
+  const generateAiSummary = async () => {
+    setIsGeneratingAiSummary(true);
+    try {
+      const response = await fetch('http://localhost:8080/api/ai/impact-summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          familyName: mockFamily.name,
+          address: mockFamily.address,
+          urgencyIndex: isUrgent ? 8 : 4,
+          needs: mockFamily.needs,
+          visits: visits.map((visit) => ({
+            date: visit.date,
+            status: visit.status,
+            notes: visit.notes,
+          })),
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'AI summary failed');
+      setAiSummary(data.summary);
+    } catch (error) {
+      setAiSummary(`${generateImpactStory(mockFamily, visits)}\n\n(${error.message})`);
+    } finally {
+      setIsGeneratingAiSummary(false);
+    }
+  };
 
   const handleValidatePresence = async (visit) => {
     if (!window.confirm(t('familyDetails.confirmPresence'))) return;
@@ -260,11 +290,21 @@ ${t('familyDetails.reportFooter')}
 
         {/* Carte Histoire d'impact */}
         <div className="mb-8 rounded-xl border border-slate-200 dark:border-slate-600 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-5 shadow-sm">
-          <h2 className="flex items-center gap-2 text-base font-semibold text-slate-800 dark:text-slate-100 mb-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+            <h2 className="flex items-center gap-2 text-base font-semibold text-slate-800 dark:text-slate-100">
             <span aria-hidden>✨</span> {t('familyDetails.impactTitle')}
-          </h2>
+            </h2>
+            <button
+              type="button"
+              onClick={generateAiSummary}
+              disabled={isGeneratingAiSummary}
+              className="inline-flex items-center justify-center min-h-[40px] px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isGeneratingAiSummary ? 'Generation...' : 'Generer avec IA'}
+            </button>
+          </div>
           <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">
-            {generateImpactStory(mockFamily, visits)}
+            {aiSummary || generateImpactStory(mockFamily, visits)}
           </p>
         </div>
 
